@@ -1,0 +1,10 @@
+{
+  "name": "version-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "release-please 試用（main への push で Release PR が開く）",
+  "type": "module",
+  "scripts": {
+    "version:show": "node scripts/version-show.mjs"
+  }
+}
