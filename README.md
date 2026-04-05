@@ -1,19 +1,34 @@
 # version-test（release-please 試用）
 
-`main` へ push すると [release-please](https://github.com/googleapis/release-please) が Release PR を作成・更新します。マージすると GitHub Release と `package.json` / `CHANGELOG.md` のバージョンが揃います。
+## ブランチの流れ（feature → develop → main）
 
-## 手順
+| ブランチ | 役割 |
+|----------|------|
+| `feature/*` | 作業用。`develop` から作成し、PR で `develop` に戻す。 |
+| `develop` | 統合ブランチ。日々のマージ先。 |
+| `main` | リリース用。本番相当の履歴。`develop` からマージしてリリースする。 |
 
-1. GitHub で空のリポジトリを作成する（README は付けなくてよい）。
-2. このディレクトリでリモートを追加して `main` を push する。
+```text
+feature/foo ──PR──► develop ──PR（リリースタイミング）──► main
+```
 
-   ```bash
-   git remote add origin https://github.com/<あなたのユーザー>/<リポジトリ名>.git
-   git branch -M main
-   git push -u origin main
-   ```
+- **日々の開発**: `develop` をチェックアウトし、`feature/件名` を切って作業 → PR のマージ先は **`develop`**。
+- **リリース**: `develop` がまとまったら **`develop` → `main`** の PR を作り、レビュー後にマージする。
 
-3. リポジトリの **Settings → Actions → General** で「Allow GitHub Actions to create and approve pull requests」を有効にする（release-please が PR を作るため）。GitHub CLI なら次でも可です。
+## release-please（バージョン・CHANGELOG・GitHub Release）
+
+[release-please](https://github.com/googleapis/release-please) は **`main` への push** だけがトリガーです（`develop` への push では動きません）。
+
+- `develop` → `main` のマージが `main` に入ったタイミングで、Release PR の作成・更新が走ります。
+- マージ先が `main` になるコミットは、可能なら [Conventional Commits](https://www.conventionalcommits.org/)（`feat:` / `fix:` など）にすると、バージョンと CHANGELOG が意図どおり付きます。
+  - `develop` 上の feature PR を **Squash merge** する場合は、**squash 後の 1 行目**を `feat:` / `fix:` 形式にするとよいです。
+  - `develop` → `main` を **Squash** する場合は、その squash コミットのメッセージを Conventional Commits にすると、リリースノートに反映されやすいです。
+
+`package.json` の `version` と `CHANGELOG.md` は、Release PR をマージしたときに揃います。設定画面などでは `package.json` を読むだけでよいです（`npm run version:show` がサンプル）。
+
+## 初回セットアップ（クローンした人向け）
+
+1. リポジトリの **Settings → Actions → General** で「Allow GitHub Actions to create and approve pull requests」を有効にする（release-please が PR を作るため）。GitHub CLI なら次でも可です。
 
    ```bash
    gh api -X PUT "repos/<owner>/<repo>/actions/permissions/workflow" --input - <<'EOF'
@@ -21,16 +36,25 @@
    EOF
    ```
 
-4. 以降、`feat:` / `fix:` など [Conventional Commits](https://www.conventionalcommits.org/) で `main` に積むと、Release PR が更新される。内容がよければその PR をマージしてリリースする。
+2. 日々は `develop` を基準にする。
+
+   ```bash
+   git fetch origin
+   git checkout develop
+   git pull origin develop
+   ```
+
+3. 機能ブランチの例。
+
+   ```bash
+   git checkout -b feature/my-change develop
+   # ... 作業・コミット ...
+   git push -u origin feature/my-change
+   # GitHub で develop 向け PR を作成
+   ```
 
 ## ローカルでバージョン表示（設定画面のイメージ）
-
-`package.json` の `version` を読むだけの例です。
 
 ```bash
 npm run version:show
 ```
-
-## develop ブランチを試す場合
-
-`develop` にだけマージしても Actions は動きません。`develop` → `main` のマージ（または `main` への直接 push）で release-please が動きます。
