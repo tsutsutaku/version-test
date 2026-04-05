@@ -13,7 +13,13 @@
    git push -u origin main
    ```
 
-3. リポジトリの **Settings → Actions → General** で「Allow GitHub Actions to create and approve pull requests」を有効にする（release-please が PR を作るため）。
+3. リポジトリの **Settings → Actions → General** で「Allow GitHub Actions to create and approve pull requests」を有効にする（release-please が PR を作るため）。GitHub CLI なら次でも可です。
+
+   ```bash
+   gh api -X PUT "repos/<owner>/<repo>/actions/permissions/workflow" --input - <<'EOF'
+   {"default_workflow_permissions":"write","can_approve_pull_request_reviews":true}
+   EOF
+   ```
 
 4. 以降、`feat:` / `fix:` など [Conventional Commits](https://www.conventionalcommits.org/) で `main` に積むと、Release PR が更新される。内容がよければその PR をマージしてリリースする。
 
